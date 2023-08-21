@@ -1,6 +1,8 @@
+# Site and export details
 $siteName = "Default Web Site"
 $backupName = "$siteName-" + (Get-Date -Format "yyyyMMddHHmmss")
 $exportPath = "C:\temp"
+$siteContentPath = (Get-WebSite | Where-Object { $_.Name -eq $siteName }).PhysicalPath
 
 # Ensure the export path exists
 if (!(Test-Path -Path $exportPath)) {
@@ -15,3 +17,29 @@ if (!(Test-Path -Path $exportPath)) {
 
 # Export the configuration to XML
 & "$env:systemroot\system32\inetsrv\appcmd" list backup "$backupName" /config:>"$exportPath\$backupName-config.xml"
+
+# Zip the site content and configuration files together
+Compress-Archive -Path $siteContentPath, "$exportPath\$backupName-config.xml" -DestinationPath "$exportPath\$backupName.zip"
+
+
+
+#############################################################
+
+
+# Site and import details
+$siteName = "Default Web Site"
+$backupName = "$siteName-" + (Get-Date -Format "yyyyMMddHHmmss") # Adjust as needed
+$importPath = "C:\temp"
+$siteContentPath = "C:\inetpub\wwwroot" # Adjust as needed
+
+# Unzip the exported content
+Expand-Archive -Path "$importPath\$backupName.zip" -DestinationPath $importPath
+
+# Restore the site content
+Copy-Item -Path "$importPath\*" -Destination $siteContentPath -Recurse -Exclude "*.xml"
+
+# Import the site configuration
+& "$env:systemroot\system32\inetsrv\appcmd" restore backup "$backupName"
+
+# Update the site's physical path
+& "$env:systemroot\system32\inetsrv\appcmd" set site /name:"$siteName" /physicalPath:"$siteContentPath"
