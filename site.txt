@@ -1,0 +1,17 @@
+$siteName = "Default Web Site"
+$backupName = "$siteName-" + (Get-Date -Format "yyyyMMddHHmmss")
+$exportPath = "C:\temp"
+
+# Ensure the export path exists
+if (!(Test-Path -Path $exportPath)) {
+    New-Item -Path $exportPath -ItemType Directory
+}
+
+# Delete existing backup with the same name if it exists
+& "$env:systemroot\system32\inetsrv\appcmd" delete backup "$backupName" -confirm:$false
+
+# Create a new backup with a unique name
+& "$env:systemroot\system32\inetsrv\appcmd" add backup "$backupName"
+
+# Export the configuration to XML
+& "$env:systemroot\system32\inetsrv\appcmd" list backup "$backupName" /config:>"$exportPath\$backupName-config.xml"
