@@ -1,104 +1,43 @@
-### Ticket: Migrate `/api` Endpoints for Projects from Legacy 'adam' to 'fork'
+Migrate from Lookup Tables to DTOs in Fork Project
+Description
+We are transitioning from using lookup tables in the legacy Adam project to leveraging DTOs in the Fork project for better data integrity and maintainability. The migration involves modifying existing APIs and potentially altering the database schema.
 
-#### Description:
-Migrate all `/api` endpoints related to Projects from the legacy 'adam' system to the new 'fork' backend built on Spring. This involves ensuring that all CRUD functionalities work as expected and updating documentation to keep in sync with code changes. 
+Objectives
+Replace all instances where lookup tables are being used with DTOs.
+Ensure data integrity and consistency across all components.
+Update Swagger documentation to reflect these changes.
+Tasks
+Audit Existing APIs: List all APIs that currently use lookup tables in the legacy Adam project.
 
-#### Objectives:
+Design DTOs: Create DTO classes that will represent the same data as the lookup tables.
 
-1. **Endpoint Migration:**
-    - Migrate all existing API endpoints under `/api/projects` from the legacy 'adam' system to the new 'fork' Spring application.
-    
-2. **CRUD Functionality:**
-    - Validate that Create, Read, Update, and Delete (CRUD) operations are functional for each migrated endpoint.
+Example: Replace ProjectTypeLookupTable with ProjectTypeDTO.
+Update Database Schema: Assess the need for altering the database schema and perform migrations if necessary.
 
-3. **Swagger Documentation:**
-    - Update or create Swagger annotations for controllers, entities, and any other related classes or methods.
-    - Ensure that documentation is sufficient for automated doc generation.
+Modify APIs:
 
-#### Acceptance Criteria:
+Update the Controllers to use DTOs instead of lookup tables.
+Update the Services to populate DTOs from the underlying data.
+Update the Repositories to query for the necessary data.
+Test CRUD Operations: Thoroughly test all CRUD operations for these APIs to ensure that the new implementation using DTOs works as expected.
 
-1. **Endpoint Migration:**
-    - All `/api/projects` endpoints must be fully migrated and should function as expected in the 'fork' system.
+Update Documentation:
 
-2. **CRUD Functionality:**
-    - Unit tests confirm that CRUD operations for each endpoint work as expected.
-    - Manual API testing (e.g., Postman) shows consistent results with the legacy system.
+Update inline code comments.
+Update Swagger annotations to document the DTOs and modified endpoints.
+Review & Refactor:
 
-3. **Swagger Documentation:**
-    - All relevant code has Swagger annotations.
-    - Generated API documentation is accurate, comprehensive, and matches the functionality.
+Peer-review the changes for code quality, maintainability, and adherence to best practices.
+Refactor code as necessary.
+Performance Testing: Verify that the new implementation does not introduce any performance bottlenecks.
 
-#### Additional Notes:
+Deploy to Staging: Deploy the changes to the staging environment for further testing and eventual production release.
 
-- Ensure backward compatibility where applicable.
-- Test coverage should be above 80% for the new CRUD operations.
-- Update any related internal documentation or README files to reflect changes.
-
-#### Tasks:
-
-- [ ] Code migration of `/api/projects` endpoints.
-- [ ] Write unit tests for CRUD functionalities.
-- [ ] Update Swagger annotations.
-- [ ] Generate and review new API documentation.
-- [ ] Manual testing of migrated endpoints.
-  
-#### Time Estimation:
-- 2-3 weeks (Adjust as needed based on complexity)
-
-
-
-
-### Ticket: Discuss Lookup Tables vs ORM-based Methods for Data Retrieval
-
-#### Description:
-The legacy 'adam' system uses lookup tables for various functionalities, which may introduce inconsistencies in data handling. This ticket aims to spark a discussion about the benefits and drawbacks of lookup tables versus using ORM to fetch and manage values directly. 
-
-#### Objectives:
-
-1. **Discuss Lookup Tables:**
-    - Understand the existing usage of lookup tables in the legacy 'adam' system.
-    - Identify the benefits and drawbacks.
-
-2. **Discuss ORM-based Methods:**
-    - Explore how ORM can be used to replace lookup tables.
-    - Identify the benefits and drawbacks.
-    
-3. **Make a Decision:**
-    - Conclude whether to continue using lookup tables, switch to ORM-based methods, or adopt a hybrid approach.
-
-#### Lookup Tables - Potential Benefits:
-
-- Faster read operations due to caching.
-- Loose coupling between tables can offer more flexibility.
-- Easier to manage business rules that don't require code changes.
-
-#### Lookup Tables - Potential Drawbacks:
-
-- Risk of data inconsistencies.
-- Can become a bottleneck for write operations.
-- Maintenance can become cumbersome as the system scales.
-
-#### ORM-based Methods - Potential Benefits:
-
-- Strong data consistency.
-- Easier to maintain and refactor.
-- More natural integration with programming languages and frameworks.
-
-#### ORM-based Methods - Potential Drawbacks:
-
-- May introduce some performance overhead for read operations.
-- Strong coupling between tables and classes.
-- Requires frequent code changes for simple rule modifications.
-
-#### Acceptance Criteria:
-
-- A detailed analysis of both approaches, covering their benefits and drawbacks.
-- A finalized decision documented and supported by the team.
-
-#### Additional Notes:
-
-- Ensure that the discussion involves all key stakeholders.
-- Consider the scale, performance, and business requirements.
-
-#### Time Estimation:
-- 1 week (For discussion and decision-making)
+Acceptance Criteria
+All APIs that used lookup tables now use DTOs.
+All CRUD operations function as expected.
+Swagger documentation is updated.
+Code is reviewed and meets quality standards.
+Additional Notes
+Pay special attention to data integrity when migrating from lookup tables to DTOs.
+Co-ordinate with frontend teams to ensure that these backend changes are compatible with existing or upcoming frontend implementations.
