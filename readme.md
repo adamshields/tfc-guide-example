@@ -1,43 +1,75 @@
-Migrate from Lookup Tables to DTOs in Fork Project
-Description
-We are transitioning from using lookup tables in the legacy Adam project to leveraging DTOs in the Fork project for better data integrity and maintainability. The migration involves modifying existing APIs and potentially altering the database schema.
+public class XYZControllerTest {
 
-Objectives
-Replace all instances where lookup tables are being used with DTOs.
-Ensure data integrity and consistency across all components.
-Update Swagger documentation to reflect these changes.
-Tasks
-Audit Existing APIs: List all APIs that currently use lookup tables in the legacy Adam project.
+    @Mock
+    private XYZService XYZService;
 
-Design DTOs: Create DTO classes that will represent the same data as the lookup tables.
+    @InjectMocks
+    private XYZController XYZController;
 
-Example: Replace ProjectTypeLookupTable with ProjectTypeDTO.
-Update Database Schema: Assess the need for altering the database schema and perform migrations if necessary.
+    /**
+     * Test the endpoint to retrieve a XYZ by its design ID and XYZ ID.
+     */
+    @Test
+    void testGetXYZByIds() {
+        // ... // testCaseCode
+    }
 
-Modify APIs:
+    /**
+     * Test the endpoint to retrieve a list of XYZs by their design ID.
+     */
+    @Test
+    void testGetXYZsByDesignId() {
+        // ... // testCaseCode
+    }
 
-Update the Controllers to use DTOs instead of lookup tables.
-Update the Services to populate DTOs from the underlying data.
-Update the Repositories to query for the necessary data.
-Test CRUD Operations: Thoroughly test all CRUD operations for these APIs to ensure that the new implementation using DTOs works as expected.
+    /**
+     * Test the endpoint to create a new XYZ.
+     */
+    @Test
+    void testCreateXYZ() {
+        // ... // testCaseCode
+    }
 
-Update Documentation:
+    /**
+     * Test the endpoint to update a list of existing XYZs.
+     */
+    @Test
+    void testUpdateXYZs() {
+        // ... // testCaseCode
+    }
 
-Update inline code comments.
-Update Swagger annotations to document the DTOs and modified endpoints.
-Review & Refactor:
+    /**
+     * Test the endpoint to patch a list of existing XYZs.
+     */
+    @Test
+    void testPatchXYZs() {
+        // ... // testCaseCode
+    }
 
-Peer-review the changes for code quality, maintainability, and adherence to best practices.
-Refactor code as necessary.
-Performance Testing: Verify that the new implementation does not introduce any performance bottlenecks.
+    /**
+     * Test the endpoint to revert a XYZ to its previous state.
+     */
+    @Test
+    void testRevertXYZ() {
+        // ... // testCaseCode
+    }
 
-Deploy to Staging: Deploy the changes to the staging environment for further testing and eventual production release.
+    /**
+     * Test the endpoint to create a copy of an existing XYZ.
+     */
+    @Test
+    void testCopyXYZ() {
+        // ... // testCaseCode
+    }
 
-Acceptance Criteria
-All APIs that used lookup tables now use DTOs.
-All CRUD operations function as expected.
-Swagger documentation is updated.
-Code is reviewed and meets quality standards.
-Additional Notes
-Pay special attention to data integrity when migrating from lookup tables to DTOs.
-Co-ordinate with frontend teams to ensure that these backend changes are compatible with existing or upcoming frontend implementations.
+    /**
+     * Test the endpoint to delete an existing XYZ.
+     */
+    @Test
+    void testDeleteXYZ() {
+        // ... // testCaseCode
+    }
+
+
+
+}
