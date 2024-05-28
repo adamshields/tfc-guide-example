@@ -138,20 +138,23 @@ def main():
     parser.add_argument('--db-username', default=os.getenv('DB_USERNAME'), help='Database username')
     parser.add_argument('--db-password', default=os.getenv('DB_PASSWORD'), help='Database password')
     parser.add_argument('--output-prefix', required=True, help='Prefix for output files')
+    parser.add_argument('--jdbc-driver', required=True, help='Path to the JDBC driver JAR file')
 
     args = parser.parse_args()
 
     # Construct the JDBC URL with the port
-    db_url_with_port = f"{args.db-url}:{args.db-port}"
+    db_url_with_port = f"{args.db_url}:{args.db_port}"
+
+    liquibase_classpath = f"{args.liquibase_path}/lib/{os.path.basename(args.jdbc_driver)}"
 
     update_sql_command = (
-        f"{args.liquibase_path} --changeLogFile={args.changelog_file} --url={db_url_with_port} "
-        f"--username={args.db_username} --password={args.db_password} updateSQL"
+        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
+        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} updateSQL"
     )
 
     rollback_sql_command = (
-        f"{args.liquibase_path} --changeLogFile={args.changelog_file} --url={db_url_with_port} "
-        f"--username={args.db_username} --password={args.db_password} rollbackSQL"
+        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
+        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} rollbackSQL"
     )
 
     print("Running Liquibase updateSQL...")
@@ -177,8 +180,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 ```
 ```
-python script_name.py --liquibase-path /path/to/liquibase --changelog-file /path/to/changelog.xml --db-url jdbc:mysql://your_database_url --db-port 3306 --db-username your_db_username --db-password your_db_password --output-prefix my_liquibase_script
+python script_name.py --liquibase-path /path/to/liquibase --changelog-file /path/to/changelog.xml --db-url jdbc:mysql://your_database_url --db-port 3306 --db-username your_db_username --db-password your_db_password --output-prefix my_liquibase_script --jdbc-driver /path/to/mysql-connector-java-X.X.X.jar
+
 
 ```
