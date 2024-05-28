@@ -190,7 +190,6 @@ python script_name.py --liquibase-path /path/to/liquibase --changelog-file /path
 
 
 ```
-
 import subprocess
 import pyperclip
 import argparse
@@ -260,12 +259,12 @@ def main():
     liquibase_classpath = f"{jdbc_driver_path}"
 
     update_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
+        f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={args.changelog_file} "
         f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} updateSQL"
     )
 
     rollback_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
+        f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={args.changelog_file} "
         f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} rollbackSQL"
     )
 
