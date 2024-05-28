@@ -242,16 +242,17 @@ def main():
     parser = argparse.ArgumentParser(description='Run Liquibase commands and copy output to clipboard.')
     parser.add_argument('--liquibase-path', required=True, help='Path to Liquibase executable')
     parser.add_argument('--changelog-file', required=True, help='Path to Liquibase changelog file')
-    parser.add_argument('--db-url', required=True, help='Database URL')
+    parser.add_argument('--db-host', required=True, help='Database host')
     parser.add_argument('--db-port', default='3306', help='Database port (default: 3306)')
+    parser.add_argument('--db-name', required=True, help='Database name')
     parser.add_argument('--db-username', default=os.getenv('DB_USERNAME'), help='Database username')
     parser.add_argument('--db-password', default=os.getenv('DB_PASSWORD'), help='Database password')
     parser.add_argument('--output-prefix', required=True, help='Prefix for output files')
 
     args = parser.parse_args()
 
-    # Construct the JDBC URL with the port
-    db_url_with_port = f"{args.db_url}:{args.db_port}"
+    # Construct the JDBC URL with the host, port, and database name
+    db_url = f"jdbc:mysql://{args.db_host}:{args.db_port}/{args.db_name}"
 
     # Hardcoded JDBC driver path
     jdbc_driver_path = "/path/to/mysql-connector-java-X.X.X.jar"  # Update this path to your JDBC driver location
@@ -260,12 +261,12 @@ def main():
 
     update_sql_command = (
         f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={args.changelog_file} "
-        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} updateSQL"
+        f"--url={db_url} --username={args.db_username} --password={args.db_password} updateSQL"
     )
 
     rollback_sql_command = (
         f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={args.changelog_file} "
-        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} rollbackSQL"
+        f"--url={db_url} --username={args.db_username} --password={args.db_password} rollbackSQL"
     )
 
     print("Running Liquibase updateSQL...")
@@ -291,5 +292,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 ```
