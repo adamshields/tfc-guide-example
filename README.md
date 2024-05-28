@@ -187,3 +187,110 @@ python script_name.py --liquibase-path /path/to/liquibase --changelog-file /path
 
 
 ```
+
+
+```
+
+import subprocess
+import pyperclip
+import argparse
+import os
+
+def run_liquibase_command(command):
+    """
+    Run a Liquibase command and capture the output.
+    """
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=True)
+        return result.stdout.decode('utf-8'), None
+    except subprocess.CalledProcessError as e:
+        return None, e.stderr.decode('utf-8')
+
+def copy_to_clipboard(data):
+    """
+    Copy data to the clipboard.
+    """
+    pyperclip.copy(data)
+    print("Output copied to clipboard.")
+
+def save_to_file(data, filename):
+    """
+    Save data to a file.
+    """
+    with open(filename, 'w') as file:
+        file.write(data)
+    print(f"Output saved to {filename}")
+
+def generate_script(base_filename, update_sql, rollback_sql):
+    """
+    Generate a script for the MySQL admin with both update and rollback SQL.
+    """
+    script_content = f"""-- Liquibase Update and Rollback SQL Script
+
+-- Update SQL
+-- To apply the update, run the following SQL commands:
+{update_sql}
+
+-- Rollback SQL
+-- To rollback the update, run the following SQL commands:
+{rollback_sql}
+"""
+    script_filename = f"{base_filename}_liquibase_script.sql"
+    save_to_file(script_content, script_filename)
+    print(f"Script generated: {script_filename}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Run Liquibase commands and copy output to clipboard.')
+    parser.add_argument('--liquibase-path', required=True, help='Path to Liquibase executable')
+    parser.add_argument('--changelog-file', required=True, help='Path to Liquibase changelog file')
+    parser.add_argument('--db-url', required=True, help='Database URL')
+    parser.add_argument('--db-port', default='3306', help='Database port (default: 3306)')
+    parser.add_argument('--db-username', default=os.getenv('DB_USERNAME'), help='Database username')
+    parser.add_argument('--db-password', default=os.getenv('DB_PASSWORD'), help='Database password')
+    parser.add_argument('--output-prefix', required=True, help='Prefix for output files')
+
+    args = parser.parse_args()
+
+    # Construct the JDBC URL with the port
+    db_url_with_port = f"{args.db_url}:{args.db_port}"
+
+    # Hardcoded JDBC driver path
+    jdbc_driver_path = "/path/to/mysql-connector-java-X.X.X.jar"  # Update this path to your JDBC driver location
+
+    liquibase_classpath = f"{jdbc_driver_path}"
+
+    update_sql_command = (
+        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
+        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} updateSQL"
+    )
+
+    rollback_sql_command = (
+        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
+        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} rollbackSQL"
+    )
+
+    print("Running Liquibase updateSQL...")
+    update_sql_output, update_sql_error = run_liquibase_command(update_sql_command)
+    if update_sql_output:
+        update_filename = f"{args.output_prefix}_update.sql"
+        save_to_file(update_sql_output, update_filename)
+        copy_to_clipboard(update_sql_output)
+    else:
+        print(f"Error running updateSQL command: {update_sql_error}")
+
+    print("Running Liquibase rollbackSQL...")
+    rollback_sql_output, rollback_sql_error = run_liquibase_command(rollback_sql_command)
+    if rollback_sql_output:
+        rollback_filename = f"{args.output_prefix}_rollback.sql"
+        save_to_file(rollback_sql_output, rollback_filename)
+        copy_to_clipboard(rollback_sql_output)
+    else:
+        print(f"Error running rollbackSQL command: {rollback_sql_error}")
+
+    if update_sql_output and rollback_sql_output:
+        generate_script(args.output_prefix, update_sql_output, rollback_sql_output)
+
+if __name__ == "__main__":
+    main()
+
+```
