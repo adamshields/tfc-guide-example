@@ -471,4 +471,5 @@ with open('db.changelog-master.xml', 'w') as master_file:
         master_file.write(f'    <include file="changelogs/{table_name}.xml"/>\n')
 
     master_file.write('</databaseChangeLog>')
+
 ```
