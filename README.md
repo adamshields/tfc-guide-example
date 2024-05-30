@@ -410,3 +410,65 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+
+
+
+
+
+```
+import os
+import xml.etree.ElementTree as ET
+
+# Function to create a new XML tree for a changelog
+def create_changelog_tree():
+    return ET.ElementTree(ET.Element('databaseChangeLog', {
+        'xmlns': 'http://www.liquibase.org/xml/ns/dbchangelog',
+        'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+        'xsi:schemaLocation': 'http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd'
+    }))
+
+# Parse the generated changelog
+tree = ET.parse('full_changelog.xml')
+root = tree.getroot()
+
+# Create a directory to store the individual changelogs
+os.makedirs('changelogs', exist_ok=True)
+
+# Dictionary to store table-specific changelogs
+table_changelogs = {}
+
+# Process each changeSet
+for changeSet in root.findall('{http://www.liquibase.org/xml/ns/dbchangelog}changeSet'):
+    # Identify table-related changes (e.g., createTable, addColumn)
+    table_name = None
+    if changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}createTable') is not None:
+        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}createTable').get('tableName')
+    elif changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}addColumn') is not None:
+        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}addColumn').get('tableName')
+    elif changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}dropTable') is not None:
+        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}dropTable').get('tableName')
+    # Add more conditions if necessary for other table-related changes
+
+    if table_name:
+        if table_name not in table_changelogs:
+            table_changelogs[table_name] = create_changelog_tree()
+        table_changelogs[table_name].getroot().append(changeSet)
+
+# Write each table-specific changelog to a file
+for table_name, changelog_tree in table_changelogs.items():
+    changelog_file = f'changelogs/{table_name}.xml'
+    changelog_tree.write(changelog_file, xml_declaration=True, encoding='UTF-8')
+
+# Create or update the master changelog to include individual changelogs
+with open('db.changelog-master.xml', 'w') as master_file:
+    master_file.write('''<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">\n''')
+
+    for table_name in table_changelogs.keys():
+        master_file.write(f'    <include file="changelogs/{table_name}.xml"/>\n')
+
+    master_file.write('</databaseChangeLog>')
+```
