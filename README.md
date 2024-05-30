@@ -480,11 +480,16 @@ with open('db.changelog-master.xml', 'w') as master_file:
 import os
 from lxml import etree as ET
 
+# Define the namespace map
+nsmap = {
+    None: 'http://www.liquibase.org/xml/ns/dbchangelog',
+    'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+}
+
 # Function to create a new XML tree for a changelog
 def create_changelog_tree():
-    return ET.ElementTree(ET.Element('databaseChangeLog', nsmap={
-        None: 'http://www.liquibase.org/xml/ns/dbchangelog',
-        'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+    return ET.ElementTree(ET.Element('databaseChangeLog', nsmap=nsmap, attrib={
+        '{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd'
     }))
 
 # Parse the generated changelog
@@ -530,5 +535,6 @@ with open('db.changelog-master.xml', 'w') as master_file:
         master_file.write(f'    <include file="changelogs/{table_name}.xml"/>\n')
 
     master_file.write('</databaseChangeLog>')
+
 
 ```
