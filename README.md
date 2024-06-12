@@ -83,6 +83,11 @@ If the cursor is at the beginning of a line and no other characters are present,
 ```
 import boto3
 from botocore.client import Config
+import urllib3
+import os
+
+# Suppress only the single InsecureRequestWarning from urllib3 needed
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # AWS S3 credentials and endpoint
 aws_access_key = 'your_access_key'
@@ -92,6 +97,7 @@ bucket_name = 'your_bucket_name'
 test_folder = 'test_folder'
 test_file_name = 'test_file.txt'
 test_file_content = 'This is a test file.'
+local_download_path = 'downloaded_test_file.txt'
 
 # Initialize S3 client
 s3 = boto3.client(
@@ -102,6 +108,24 @@ s3 = boto3.client(
     config=Config(signature_version='s3v4'),
     verify=False
 )
+
+def check_bucket_exists():
+    try:
+        s3.head_bucket(Bucket=bucket_name)
+        print(f'Bucket "{bucket_name}" exists.')
+        return True
+    except Exception as e:
+        print(f'Bucket "{bucket_name}" does not exist: {e}')
+        return False
+
+def check_object_exists():
+    try:
+        s3.head_object(Bucket=bucket_name, Key=f'{test_folder}/{test_file_name}')
+        print(f'Object "{test_file_name}" exists in bucket "{bucket_name}/{test_folder}".')
+        return True
+    except Exception as e:
+        print(f'Object "{test_file_name}" does not exist: {e}')
+        return False
 
 def create_test_file():
     try:
@@ -114,6 +138,17 @@ def create_test_file():
     except Exception as e:
         print(f'Error creating test file: {e}')
 
+def read_test_file():
+    try:
+        response = s3.get_object(
+            Bucket=bucket_name,
+            Key=f'{test_folder}/{test_file_name}'
+        )
+        content = response['Body'].read().decode('utf-8')
+        print(f'Test file content: {content}')
+    except Exception as e:
+        print(f'Error reading test file: {e}')
+
 def delete_test_file():
     try:
         response = s3.delete_object(
@@ -124,12 +159,85 @@ def delete_test_file():
     except Exception as e:
         print(f'Error deleting test file: {e}')
 
-if __name__ == '__main__':
-    print('Creating test file...')
-    create_test_file()
+def list_files_in_folder():
+    try:
+        response = s3.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'{test_folder}/'
+        )
+        if 'Contents' in response:
+            files = [obj['Key'] for obj in response['Contents']]
+            print('Files in folder:')
+            for file in files:
+                print(file)
+        else:
+            print('No files found in the folder.')
+    except Exception as e:
+        print(f'Error listing files: {e}')
 
-    print('Deleting test file...')
-    delete_test_file()
+def copy_test_file():
+    try:
+        copy_source = {'Bucket': bucket_name, 'Key': f'{test_folder}/{test_file_name}'}
+        s3.copy_object(CopySource=copy_source, Bucket=bucket_name, Key=f'{test_folder}/copy_{test_file_name}')
+        print('Test file copied successfully.')
+    except Exception as e:
+        print(f'Error copying test file: {e}')
+
+def move_test_file():
+    try:
+        copy_test_file()
+        delete_test_file()
+        print('Test file moved successfully.')
+    except Exception as e:
+        print(f'Error moving test file: {e}')
+
+def download_test_file():
+    try:
+        s3.download_file(bucket_name, f'{test_folder}/{test_file_name}', local_download_path)
+        print(f'Test file downloaded successfully to {local_download_path}.')
+    except Exception as e:
+        print(f'Error downloading test file: {e}')
+
+def upload_large_file():
+    large_file_path = 'large_test_file.txt'
+    try:
+        # Create a large file for testing
+        with open(large_file_path, 'w') as f:
+            f.write('A' * 10 * 1024 * 1024)  # 10MB file
+
+        s3.upload_file(large_file_path, bucket_name, f'{test_folder}/large_test_file.txt')
+        print('Large test file uploaded successfully.')
+    except Exception as e:
+        print(f'Error uploading large test file: {e}')
+    finally:
+        if os.path.exists(large_file_path):
+            os.remove(large_file_path)
+
+if __name__ == '__main__':
+    if check_bucket_exists():
+        print('Creating test file...')
+        create_test_file()
+
+        print('Reading test file...')
+        read_test_file()
+
+        print('Listing files in folder...')
+        list_files_in_folder()
+
+        print('Copying test file...')
+        copy_test_file()
+
+        print('Moving test file...')
+        move_test_file()
+
+        print('Downloading test file...')
+        download_test_file()
+
+        print('Uploading large file...')
+        upload_large_file()
+
+        print('Deleting test file...')
+        delete_test_file()
 
 
 ```
