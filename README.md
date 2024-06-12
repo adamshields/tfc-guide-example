@@ -81,23 +81,6 @@ If the cursor is at the beginning of a line and no other characters are present,
 
 
 ```
-import boto3
-from botocore.client import Config
-import urllib3
-import os
-
-# Suppress only the single InsecureRequestWarning from urllib3 needed
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# AWS S3 credentials and endpoint
-aws_access_key = 'your_access_key'
-aws_secret_access_key = 'your_secret_key'
-endpoint_url = 'your_endpoint_url'
-bucket_name = 'your_bucket_name'
-test_folder = 'test_folder'
-test_file_name = 'test_file.txt'
-test_file_content = 'This is a test file.'
-local_download_path = 'downloaded_test_file.txt'
 
 # Initialize S3 client
 s3 = boto3.client(
@@ -118,13 +101,13 @@ def check_bucket_exists():
         print(f'Bucket "{bucket_name}" does not exist: {e}')
         return False
 
-def check_object_exists():
+def check_object_exists(key):
     try:
-        s3.head_object(Bucket=bucket_name, Key=f'{test_folder}/{test_file_name}')
-        print(f'Object "{test_file_name}" exists in bucket "{bucket_name}/{test_folder}".')
+        s3.head_object(Bucket=bucket_name, Key=key)
+        print(f'Object "{key}" exists in bucket "{bucket_name}".')
         return True
     except Exception as e:
-        print(f'Object "{test_file_name}" does not exist: {e}')
+        print(f'Object "{key}" does not exist: {e}')
         return False
 
 def create_test_file():
@@ -177,9 +160,10 @@ def list_files_in_folder():
 
 def copy_test_file():
     try:
-        copy_source = {'Bucket': bucket_name, 'Key': f'{test_folder}/{test_file_name}'}
-        s3.copy_object(CopySource=copy_source, Bucket=bucket_name, Key=f'{test_folder}/copy_{test_file_name}')
-        print('Test file copied successfully.')
+        if check_object_exists(f'{test_folder}/{test_file_name}'):
+            copy_source = {'Bucket': bucket_name, 'Key': f'{test_folder}/{test_file_name}'}
+            s3.copy_object(CopySource=copy_source, Bucket=bucket_name, Key=f'{test_folder}/copy_{test_file_name}')
+            print('Test file copied successfully.')
     except Exception as e:
         print(f'Error copying test file: {e}')
 
@@ -193,8 +177,9 @@ def move_test_file():
 
 def download_test_file():
     try:
-        s3.download_file(bucket_name, f'{test_folder}/{test_file_name}', local_download_path)
-        print(f'Test file downloaded successfully to {local_download_path}.')
+        if check_object_exists(f'{test_folder}/{test_file_name}'):
+            s3.download_file(bucket_name, f'{test_folder}/{test_file_name}', local_download_path)
+            print(f'Test file downloaded successfully to {local_download_path}.')
     except Exception as e:
         print(f'Error downloading test file: {e}')
 
@@ -227,9 +212,6 @@ if __name__ == '__main__':
         print('Copying test file...')
         copy_test_file()
 
-        print('Moving test file...')
-        move_test_file()
-
         print('Downloading test file...')
         download_test_file()
 
@@ -238,6 +220,9 @@ if __name__ == '__main__':
 
         print('Deleting test file...')
         delete_test_file()
+
+        print('Listing files in folder again...')
+        list_files_in_folder()
 
 
 ```
