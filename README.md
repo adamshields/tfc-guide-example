@@ -81,460 +81,55 @@ If the cursor is at the beginning of a line and no other characters are present,
 
 
 ```
-import subprocess
-import pyperclip
-import argparse
-import os
+import boto3
+from botocore.client import Config
 
-def run_liquibase_command(command):
-    """
-    Run a Liquibase command and capture the output.
-    """
+# AWS S3 credentials and endpoint
+aws_access_key = 'your_access_key'
+aws_secret_access_key = 'your_secret_key'
+endpoint_url = 'your_endpoint_url'
+bucket_name = 'your_bucket_name'
+test_folder = 'test_folder'
+test_file_name = 'test_file.txt'
+test_file_content = 'This is a test file.'
+
+# Initialize S3 client
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=aws_access_key,
+    aws_secret_access_key=aws_secret_access_key,
+    endpoint_url=endpoint_url,
+    config=Config(signature_version='s3v4'),
+    verify=False
+)
+
+def create_test_file():
     try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=True)
-        return result.stdout.decode('utf-8'), None
-    except subprocess.CalledProcessError as e:
-        return None, e.stderr.decode('utf-8')
+        response = s3.put_object(
+            Bucket=bucket_name,
+            Key=f'{test_folder}/{test_file_name}',
+            Body=test_file_content
+        )
+        print(f'Test file created successfully: {response}')
+    except Exception as e:
+        print(f'Error creating test file: {e}')
 
-def copy_to_clipboard(data):
-    """
-    Copy data to the clipboard.
-    """
-    pyperclip.copy(data)
-    print("Output copied to clipboard.")
-
-def save_to_file(data, filename):
-    """
-    Save data to a file.
-    """
-    with open(filename, 'w') as file:
-        file.write(data)
-    print(f"Output saved to {filename}")
-
-def generate_script(base_filename, update_sql, rollback_sql):
-    """
-    Generate a script for the MySQL admin with both update and rollback SQL.
-    """
-    script_content = f"""-- Liquibase Update and Rollback SQL Script
-
--- Update SQL
--- To apply the update, run the following SQL commands:
-{update_sql}
-
--- Rollback SQL
--- To rollback the update, run the following SQL commands:
-{rollback_sql}
-"""
-    script_filename = f"{base_filename}_liquibase_script.sql"
-    save_to_file(script_content, script_filename)
-    print(f"Script generated: {script_filename}")
-
-def main():
-    parser = argparse.ArgumentParser(description='Run Liquibase commands and copy output to clipboard.')
-    parser.add_argument('--liquibase-path', required=True, help='Path to Liquibase executable')
-    parser.add_argument('--changelog-file', required=True, help='Path to Liquibase changelog file')
-    parser.add_argument('--db-url', required=True, help='Database URL')
-    parser.add_argument('--db-port', default='3306', help='Database port (default: 3306)')
-    parser.add_argument('--db-username', default=os.getenv('DB_USERNAME'), help='Database username')
-    parser.add_argument('--db-password', default=os.getenv('DB_PASSWORD'), help='Database password')
-    parser.add_argument('--output-prefix', required=True, help='Prefix for output files')
-    parser.add_argument('--jdbc-driver', required=True, help='Path to the JDBC driver JAR file')
-
-    args = parser.parse_args()
-
-    # Construct the JDBC URL with the port
-    db_url_with_port = f"{args.db_url}:{args.db_port}"
-
-    liquibase_classpath = f"{args.liquibase_path}/lib/{os.path.basename(args.jdbc_driver)}"
-
-    update_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
-        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} updateSQL"
-    )
-
-    rollback_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --changeLogFile={args.changelog_file} "
-        f"--url={db_url_with_port} --username={args.db_username} --password={args.db_password} rollbackSQL"
-    )
-
-    print("Running Liquibase updateSQL...")
-    update_sql_output, update_sql_error = run_liquibase_command(update_sql_command)
-    if update_sql_output:
-        update_filename = f"{args.output_prefix}_update.sql"
-        save_to_file(update_sql_output, update_filename)
-        copy_to_clipboard(update_sql_output)
-    else:
-        print(f"Error running updateSQL command: {update_sql_error}")
-
-    print("Running Liquibase rollbackSQL...")
-    rollback_sql_output, rollback_sql_error = run_liquibase_command(rollback_sql_command)
-    if rollback_sql_output:
-        rollback_filename = f"{args.output_prefix}_rollback.sql"
-        save_to_file(rollback_sql_output, rollback_filename)
-        copy_to_clipboard(rollback_sql_output)
-    else:
-        print(f"Error running rollbackSQL command: {rollback_sql_error}")
-
-    if update_sql_output and rollback_sql_output:
-        generate_script(args.output_prefix, update_sql_output, rollback_sql_output)
-
-if __name__ == "__main__":
-    main()
-
-```
-```
-python script_name.py --liquibase-path /path/to/liquibase --changelog-file /path/to/changelog.xml --db-url jdbc:mysql://your_database_url --db-port 3306 --db-username your_db_username --db-password your_db_password --output-prefix my_liquibase_script --jdbc-driver /path/to/mysql-connector-java-X.X.X.jar
-
-
-```
-
-
-```
-import subprocess
-import pyperclip
-import argparse
-import os
-
-def run_liquibase_command(command):
-    """
-    Run a Liquibase command and capture the output.
-    """
+def delete_test_file():
     try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=True)
-        return result.stdout.decode('utf-8'), None
-    except subprocess.CalledProcessError as e:
-        return None, e.stderr.decode('utf-8')
-
-def copy_to_clipboard(data):
-    """
-    Copy data to the clipboard.
-    """
-    pyperclip.copy(data)
-    print("Output copied to clipboard.")
-
-def save_to_file(data, filename):
-    """
-    Save data to a file.
-    """
-    with open(filename, 'w') as file:
-        file.write(data)
-    print(f"Output saved to {filename}")
-
-def generate_script(base_filename, update_sql, rollback_sql):
-    """
-    Generate a script for the MySQL admin with both update and rollback SQL.
-    """
-    script_content = f"""-- Liquibase Update and Rollback SQL Script
-
--- Update SQL
--- To apply the update, run the following SQL commands:
-{update_sql}
-
--- Rollback SQL
--- To rollback the update, run the following SQL commands:
-{rollback_sql}
-"""
-    script_filename = f"{base_filename}_liquibase_script.sql"
-    save_to_file(script_content, script_filename)
-    print(f"Script generated: {script_filename}")
-
-def main():
-    parser = argparse.ArgumentParser(description='Run Liquibase commands and copy output to clipboard.')
-    parser.add_argument('--liquibase-path', required=True, help='Path to Liquibase executable')
-    parser.add_argument('--changelog-file', required=True, help='Path to Liquibase changelog file')
-    parser.add_argument('--db-host', required=True, help='Database host')
-    parser.add_argument('--db-port', default='3306', help='Database port (default: 3306)')
-    parser.add_argument('--db-name', required=True, help='Database name')
-    parser.add_argument('--db-username', default=os.getenv('DB_USERNAME'), help='Database username')
-    parser.add_argument('--db-password', default=os.getenv('DB_PASSWORD'), help='Database password')
-    parser.add_argument('--output-prefix', required=True, help='Prefix for output files')
-
-    args = parser.parse_args()
-
-    # Construct the JDBC URL with the host, port, and database name
-    db_url = f"jdbc:mysql://{args.db_host}:{args.db_port}/{args.db_name}"
-
-    # Hardcoded JDBC driver path
-    jdbc_driver_path = "/path/to/mysql-connector-java-X.X.X.jar"  # Update this path to your JDBC driver location
-
-    liquibase_classpath = f"{jdbc_driver_path}"
-
-    update_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={args.changelog_file} "
-        f"--url={db_url} --username={args.db_username} --password={args.db_password} updateSQL"
-    )
-
-    rollback_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={args.changelog_file} "
-        f"--url={db_url} --username={args.db_username} --password={args.db_password} rollbackSQL"
-    )
-
-    print("Running Liquibase updateSQL...")
-    update_sql_output, update_sql_error = run_liquibase_command(update_sql_command)
-    if update_sql_output:
-        update_filename = f"{args.output_prefix}_update.sql"
-        save_to_file(update_sql_output, update_filename)
-        copy_to_clipboard(update_sql_output)
-    else:
-        print(f"Error running updateSQL command: {update_sql_error}")
-
-    print("Running Liquibase rollbackSQL...")
-    rollback_sql_output, rollback_sql_error = run_liquibase_command(rollback_sql_command)
-    if rollback_sql_output:
-        rollback_filename = f"{args.output_prefix}_rollback.sql"
-        save_to_file(rollback_sql_output, rollback_filename)
-        copy_to_clipboard(rollback_sql_output)
-    else:
-        print(f"Error running rollbackSQL command: {rollback_sql_error}")
-
-    if update_sql_output and rollback_sql_output:
-        generate_script(args.output_prefix, update_sql_output, rollback_sql_output)
-
-if __name__ == "__main__":
-    main()
-
-
-```
-
-
-
-
-
-
-##########################################
-
-```
-import subprocess
-import pyperclip
-import argparse
-import os
-
-def run_liquibase_command(command):
-    """
-    Run a Liquibase command and capture the output.
-    """
-    try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, check=True)
-        return result.stdout.decode('utf-8'), None
-    except subprocess.CalledProcessError as e:
-        return None, e.stderr.decode('utf-8')
-
-def copy_to_clipboard(data):
-    """
-    Copy data to the clipboard.
-    """
-    pyperclip.copy(data)
-    print("Output copied to clipboard.")
-
-def save_to_file(data, filename):
-    """
-    Save data to a file.
-    """
-    with open(filename, 'w') as file:
-        file.write(data)
-    print(f"Output saved to {filename}")
-
-def generate_script(base_filename, update_sql, rollback_sql):
-    """
-    Generate a script for the MySQL admin with both update and rollback SQL.
-    """
-    script_content = f"""-- Liquibase Update and Rollback SQL Script
-
--- Update SQL
--- To apply the update, run the following SQL commands:
-{update_sql}
-
--- Rollback SQL
--- To rollback the update, run the following SQL commands:
-{rollback_sql}
-"""
-    script_filename = f"{base_filename}_liquibase_script.sql"
-    save_to_file(script_content, script_filename)
-    print(f"Script generated: {script_filename}")
-
-def main():
-    parser = argparse.ArgumentParser(description='Run Liquibase commands and copy output to clipboard.')
-    parser.add_argument('--liquibase-path', required=True, help='Path to Liquibase executable')
-    parser.add_argument('--changelog-file', required=True, help='Path to Liquibase changelog file')
-    parser.add_argument('--db-host', required=True, help='Database host')
-    parser.add_argument('--db-port', default='3306', help='Database port (default: 3306)')
-    parser.add_argument('--db-name', required=True, help='Database name')
-    parser.add_argument('--db-username', default=os.getenv('DB_USERNAME'), help='Database username')
-    parser.add_argument('--db-password', default=os.getenv('DB_PASSWORD'), help='Database password')
-    parser.add_argument('--output-prefix', required=True, help='Prefix for output files')
-
-    args = parser.parse_args()
-
-    # Construct the JDBC URL with the host, port, and database name
-    db_url = f"jdbc:mysql://{args.db_host}:{args.db_port}/{args.db_name}"
-
-    # Hardcoded JDBC driver path
-    jdbc_driver_path = "/path/to/mysql-connector-java-X.X.X.jar"  # Update this path to your JDBC driver location
-
-    liquibase_classpath = f"{jdbc_driver_path}"
-
-    # Ensure the changelog file path is absolute
-    changelog_file = os.path.abspath(args.changelog_file)
-
-    update_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={changelog_file} "
-        f"--url={db_url} --username={args.db_username} --password={args.db_password} updateSQL"
-    )
-
-    rollback_sql_command = (
-        f"{args.liquibase_path} --classpath={liquibase_classpath} --driver=com.mysql.cj.jdbc.Driver --changeLogFile={changelog_file} "
-        f"--url={db_url} --username={args.db_username} --password={args.db_password} rollbackSQL"
-    )
-
-    print("Running Liquibase updateSQL...")
-    update_sql_output, update_sql_error = run_liquibase_command(update_sql_command)
-    if update_sql_output:
-        update_filename = f"{args.output_prefix}_update.sql"
-        save_to_file(update_sql_output, update_filename)
-        copy_to_clipboard(update_sql_output)
-    else:
-        print(f"Error running updateSQL command: {update_sql_error}")
-
-    print("Running Liquibase rollbackSQL...")
-    rollback_sql_output, rollback_sql_error = run_liquibase_command(rollback_sql_command)
-    if rollback_sql_output:
-        rollback_filename = f"{args.output_prefix}_rollback.sql"
-        save_to_file(rollback_sql_output, rollback_filename)
-        copy_to_clipboard(rollback_sql_output)
-    else:
-        print(f"Error running rollbackSQL command: {rollback_sql_error}")
-
-    if update_sql_output and rollback_sql_output:
-        generate_script(args.output_prefix, update_sql_output, rollback_sql_output)
-
-if __name__ == "__main__":
-    main()
-```
-
-
-
-
-
-
-```
-import os
-import xml.etree.ElementTree as ET
-
-# Function to create a new XML tree for a changelog
-def create_changelog_tree():
-    return ET.ElementTree(ET.Element('databaseChangeLog', {
-        'xmlns': 'http://www.liquibase.org/xml/ns/dbchangelog',
-        'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-        'xsi:schemaLocation': 'http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd'
-    }))
-
-# Parse the generated changelog
-tree = ET.parse('full_changelog.xml')
-root = tree.getroot()
-
-# Create a directory to store the individual changelogs
-os.makedirs('changelogs', exist_ok=True)
-
-# Dictionary to store table-specific changelogs
-table_changelogs = {}
-
-# Process each changeSet
-for changeSet in root.findall('{http://www.liquibase.org/xml/ns/dbchangelog}changeSet'):
-    # Identify table-related changes (e.g., createTable, addColumn)
-    table_name = None
-    if changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}createTable') is not None:
-        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}createTable').get('tableName')
-    elif changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}addColumn') is not None:
-        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}addColumn').get('tableName')
-    elif changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}dropTable') is not None:
-        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}dropTable').get('tableName')
-    # Add more conditions if necessary for other table-related changes
-
-    if table_name:
-        if table_name not in table_changelogs:
-            table_changelogs[table_name] = create_changelog_tree()
-        table_changelogs[table_name].getroot().append(changeSet)
-
-# Write each table-specific changelog to a file
-for table_name, changelog_tree in table_changelogs.items():
-    changelog_file = f'changelogs/{table_name}.xml'
-    changelog_tree.write(changelog_file, xml_declaration=True, encoding='UTF-8')
-
-# Create or update the master changelog to include individual changelogs
-with open('db.changelog-master.xml', 'w') as master_file:
-    master_file.write('''<databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">\n''')
-
-    for table_name in table_changelogs.keys():
-        master_file.write(f'    <include file="changelogs/{table_name}.xml"/>\n')
-
-    master_file.write('</databaseChangeLog>')
-
-```
-
-
-
-```
-import os
-from lxml import etree as ET
-
-# Define the namespace map
-nsmap = {
-    None: 'http://www.liquibase.org/xml/ns/dbchangelog',
-    'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
-}
-
-# Function to create a new XML tree for a changelog
-def create_changelog_tree():
-    return ET.ElementTree(ET.Element('databaseChangeLog', nsmap=nsmap, attrib={
-        '{http://www.w3.org/2001/XMLSchema-instance}schemaLocation': 'http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd'
-    }))
-
-# Parse the generated changelog
-tree = ET.parse('full_changelog.xml')
-root = tree.getroot()
-
-# Create a directory to store the individual changelogs
-os.makedirs('changelogs', exist_ok=True)
-
-# Dictionary to store table-specific changelogs
-table_changelogs = {}
-
-# Process each changeSet
-for changeSet in root.findall('{http://www.liquibase.org/xml/ns/dbchangelog}changeSet'):
-    # Identify table-related changes (e.g., createTable, addColumn)
-    table_name = None
-    if changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}createTable') is not None:
-        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}createTable').get('tableName')
-    elif changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}addColumn') is not None:
-        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}addColumn').get('tableName')
-    elif changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}dropTable') is not None:
-        table_name = changeSet.find('{http://www.liquibase.org/xml/ns/dbchangelog}dropTable').get('tableName')
-    # Add more conditions if necessary for other table-related changes
-
-    if table_name:
-        if table_name not in table_changelogs:
-            table_changelogs[table_name] = create_changelog_tree()
-        table_changelogs[table_name].getroot().append(changeSet)
-
-# Write each table-specific changelog to a file
-for table_name, changelog_tree in table_changelogs.items():
-    changelog_file = f'changelogs/{table_name}.xml'
-    changelog_tree.write(changelog_file, xml_declaration=True, encoding='UTF-8', pretty_print=True)
-
-# Create or update the master changelog to include individual changelogs
-with open('db.changelog-master.xml', 'w') as master_file:
-    master_file.write('''<databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">\n''')
-
-    for table_name in table_changelogs.keys():
-        master_file.write(f'    <include file="changelogs/{table_name}.xml"/>\n')
-
-    master_file.write('</databaseChangeLog>')
+        response = s3.delete_object(
+            Bucket=bucket_name,
+            Key=f'{test_folder}/{test_file_name}'
+        )
+        print(f'Test file deleted successfully: {response}')
+    except Exception as e:
+        print(f'Error deleting test file: {e}')
+
+if __name__ == '__main__':
+    print('Creating test file...')
+    create_test_file()
+
+    print('Deleting test file...')
+    delete_test_file()
 
 
 ```
